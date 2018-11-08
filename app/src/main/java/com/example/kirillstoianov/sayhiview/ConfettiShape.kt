@@ -15,16 +15,17 @@ class ConfettiShape(private var type: Type) {
         style = Paint.Style.FILL_AND_STROKE
         color = Color.GREEN
     }
-
     val path: Path = Path()
+    var pX: Float = 0f
+    var pY: Float = 0f
+    var radius: Float = 0f
+
 
     var size = Size.MEDIUM
 
-    var pX: Float = 0f
-    var pY: Float = 0f
-    var r: Float = 0f
-
+    //offsets
     var degree = 0f
+    var radiusOffset :Int= 0
 
     fun setCircle(x: Float, y: Float, radius: Float, dir: Path.Direction) {
         path.reset()
@@ -86,20 +87,24 @@ class ConfettiShape(private var type: Type) {
     fun draw(canvas: Canvas) {
         when (type) {
             Type.CIRCLE -> {
-                setCircle(pX, pY, r, Path.Direction.CCW)
+                setCircle(pX, pY, radius, Path.Direction.CCW)
                 canvas.drawPath(path, paint)
             }
             Type.RECT -> {
-                setPolygon(pX, pY, r, 4)
+                setPolygon(pX, pY, radius, 4)
+                canvas.drawPath(path, paint)
+            }
+            Type.PENTAGON -> {
+                setPolygon(pX, pY, radius, 5)
                 canvas.drawPath(path, paint)
             }
             Type.STAR -> {
-                setStar(pX, pY, r, r / 2, 5)
+                setStar(pX, pY, radius, radius / 2, 5)
                 canvas.drawPath(path, paint)
             }
         }
     }
 
     enum class Size { SMALL, MEDIUM, LARGE }
-    enum class Type { CIRCLE, RECT, STAR }
+    enum class Type { CIRCLE, RECT, PENTAGON, STAR }
 }

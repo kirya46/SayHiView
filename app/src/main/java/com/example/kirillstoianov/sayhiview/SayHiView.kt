@@ -15,6 +15,12 @@ import kotlin.math.roundToInt
 class SayHiView(context: Context) : View(context) {
 
     private var confettiItems: ArrayList<ConfettiShape> = ArrayList()
+    private val colors: ArrayList<Int> = arrayListOf(
+        Color.parseColor("#ff0096"), Color.parseColor("#fe692e"),
+        Color.parseColor("#50e3c2"), Color.parseColor("#ffb300"),
+        Color.parseColor("#ff415c"), Color.parseColor("#ff415c"),
+        Color.parseColor("#04d95c"), Color.parseColor("#135bfe")
+    )
 
     private val handBitmap: Bitmap by lazy {
         val source = BitmapFactory.decodeResource(resources, R.drawable.img_sayhi_hand)
@@ -30,11 +36,11 @@ class SayHiView(context: Context) : View(context) {
 
     private val confettiDistanceAnimator by lazy {
         //        ValueAnimator.ofFloat(Math.max(width, height).toFloat()/4,Math.max(width, height).toFloat()/2).apply {
-        ValueAnimator.ofFloat(0f/*Math.min(width, height).toFloat() / 4*/, Math.min(width, height).toFloat() / 2f)
+        ValueAnimator.ofFloat(0f/*Math.min(width, height).toFloat() / 4*/, Math.min(width, height).toFloat() / 3f)
             .apply {
                 repeatCount = ValueAnimator.INFINITE
                 repeatMode = ValueAnimator.REVERSE
-                duration = 2000
+                duration = 1500
                 addUpdateListener {
                     animateRadius = it.animatedValue as Float
                     invalidate()
@@ -67,15 +73,6 @@ class SayHiView(context: Context) : View(context) {
         super.onDraw(canvas)
 
         canvas?.apply {
-
-//            canvas.drawOval(
-//                RectF(
-//                    width / 2f + animateRadius,
-//                    height / 2f + animateRadius,
-//                    width / 2f - animateRadius,
-//                    height / 2f - animateRadius
-//                ), Paint().apply { color = Color.RED })
-
             confettiItems.forEach { shape ->
                 drawConfetti(this, shape)
             }
@@ -100,9 +97,11 @@ class SayHiView(context: Context) : View(context) {
     }
 
     private fun drawConfetti(canvas: Canvas, shape: ConfettiShape) {
-        shape.pX = width/2+((animateRadius) * Math.cos(Math.toRadians(shape.degree.toDouble())).toFloat())
-        shape.pY = height/2+((animateRadius) * Math.sin(Math.toRadians(shape.degree.toDouble())).toFloat())
-        shape.r = getShapeRadius(shape)
+        shape.pX = width / 2 +
+                ((animateRadius + shape.radiusOffset) * Math.cos(Math.toRadians(shape.degree.toDouble())).toFloat())
+        shape.pY = height / 2 +
+                ((animateRadius + shape.radiusOffset) * Math.sin(Math.toRadians(shape.degree.toDouble())).toFloat())
+        shape.radius = getShapeRadius(shape)
 
         shape.draw(canvas)
     }
@@ -111,31 +110,56 @@ class SayHiView(context: Context) : View(context) {
         val diameter = when (confettiShape.size) {
             ConfettiShape.Size.SMALL -> Math.min(width, height) / 36f
             ConfettiShape.Size.MEDIUM -> Math.min(width, height) / 27f
-            ConfettiShape.Size.LARGE -> Math.min(width, height) / 12f
+            ConfettiShape.Size.LARGE -> Math.min(width, height) / 17f
         }
         return diameter / 2
     }
 
     private fun generateConfetti() {
-        val circle = ConfettiShape(ConfettiShape.Type.CIRCLE)
-        circle.size = ConfettiShape.Size.SMALL
-        circle.degree = 1f
-        confettiItems.add(circle)
-
-        val rect = ConfettiShape(ConfettiShape.Type.RECT)
-        rect.size = ConfettiShape.Size.MEDIUM
-        rect.degree = 45f
-        rect.setColor(Color.RED)
-        confettiItems.add(rect)
-
-        val star = ConfettiShape(ConfettiShape.Type.STAR)
-        star.size = ConfettiShape.Size.LARGE
-        star.degree = 90f
-        star.setColor(Color.YELLOW)
-        confettiItems.add(star)
+        IntRange(0, 25).forEach {
+            confettiItems.add(getRandomShape())
+        }
     }
 
-    private fun getRandomShape():ConfettiShape{
-        TODO("Implement this")
+    private fun getRandomShape(): ConfettiShape {
+        val confettiShape = ConfettiShape(getRandomShapeType())
+        confettiShape.degree = getRandomDegree().toFloat()
+        confettiShape.radiusOffset = getRandomRadiusOffset()
+        confettiShape.size = getRandomShapeSize()
+        confettiShape.setColor(getRandomColor())
+        return confettiShape
     }
+
+    private fun getRandomDegree(): Int {
+       return (0 until 180).random()  *2
+    }
+
+    private fun getRandomRadiusOffset(): Int = (0 until (width / 5)).random()
+
+    private fun getRandomShapeSize(): ConfettiShape.Size {
+        val random = (0 until 4).random()
+        return when (random) {
+            1 -> ConfettiShape.Size.SMALL
+            2 -> ConfettiShape.Size.MEDIUM
+            3 -> ConfettiShape.Size.LARGE
+            else -> ConfettiShape.Size.MEDIUM
+        }
+    }
+
+    private fun getRandomColor(): Int {
+        val random = (0 until colors.size).random()
+        return colors[random]
+    }
+
+    private fun getRandomShapeType(): ConfettiShape.Type {
+        val random = (0 until 5).random()
+        return when (random) {
+            1 -> ConfettiShape.Type.CIRCLE
+            2 -> ConfettiShape.Type.RECT
+            3 -> ConfettiShape.Type.PENTAGON
+            4 -> ConfettiShape.Type.STAR
+            else -> ConfettiShape.Type.RECT
+        }
+    }
+
 }

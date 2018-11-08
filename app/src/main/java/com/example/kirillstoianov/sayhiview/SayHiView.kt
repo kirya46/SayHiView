@@ -104,6 +104,11 @@ class SayHiView(context: Context) : View(context) {
         handDegreeAnimator.start()
     }
 
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        handBitmap.recycle()
+    }
+
     private fun drawHand(canvas: Canvas) {
 
         handMatrix.reset()
@@ -118,10 +123,7 @@ class SayHiView(context: Context) : View(context) {
         val handTop = (height / 2f) - newHeight / 2
 
         handMatrix.preRotate(handDegree, newWidth / 2f, newHeight)
-        handMatrix.postScale(
-            scaleWidthFactor,
-            scaleHeightFactor/*,handLeft+handBitmap.width, handTop+handBitmap.height*/
-        )
+        handMatrix.postScale(scaleWidthFactor, scaleHeightFactor)
         handMatrix.postTranslate(handLeft, handTop)
 
         canvas.drawBitmap(handBitmap, handMatrix, null)
@@ -129,9 +131,9 @@ class SayHiView(context: Context) : View(context) {
 
     private fun drawConfetti(canvas: Canvas, shape: ConfettiShape) {
         shape.pX = width / 2 +
-                ((animateRadius + shape.radiusOffset) * Math.cos(Math.toRadians(shape.degree.toDouble())).toFloat())
+                ((animateRadius + shape.radiusOffset) * Math.cos(Math.toRadians(shape.angle.toDouble())).toFloat())
         shape.pY = height / 2 +
-                ((animateRadius + shape.radiusOffset) * Math.sin(Math.toRadians(shape.degree.toDouble())).toFloat())
+                ((animateRadius + shape.radiusOffset) * Math.sin(Math.toRadians(shape.angle.toDouble())).toFloat())
         shape.radius = getShapeRadius(shape)
 
         shape.draw(canvas)
@@ -154,7 +156,7 @@ class SayHiView(context: Context) : View(context) {
 
     private fun getRandomShape(): ConfettiShape {
         val confettiShape = ConfettiShape(getRandomShapeType())
-        confettiShape.degree = getRandomDegree().toFloat()
+        confettiShape.angle = getRandomDegree().toFloat()
         confettiShape.radiusOffset = getRandomRadiusOffset()
         confettiShape.size = getRandomShapeSize()
         confettiShape.setColor(getRandomColor())

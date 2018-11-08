@@ -11,21 +11,48 @@ import android.graphics.Path
  */
 class ConfettiShape(private var type: Type) {
 
+    /**
+     * Paint of shape.
+     */
     val paint: Paint = Paint().apply {
         style = Paint.Style.FILL_AND_STROKE
         color = Color.GREEN
     }
+
+    /**
+     * Path of shape.
+     */
     val path: Path = Path()
+
+    /**
+     * Position of shape by x-axis
+     */
     var pX: Float = 0f
+
+    /**
+     * Position of shape by y-axis
+     */
     var pY: Float = 0f
+
+    /**
+     * Radius of shape.
+     */
     var radius: Float = 0f
 
+    /**
+     * Angle on confetti increase circle
+     */
+    var angle = 0f
 
+    /**
+     * Deviation of confetti increase circle.
+     */
+    var radiusOffset: Int = 0
+
+    /**
+     * Shape size.
+     */
     var size = Size.MEDIUM
-
-    //offsets
-    var degree = 0f
-    var radiusOffset :Int= 0
 
     fun setCircle(x: Float, y: Float, radius: Float, dir: Path.Direction) {
         path.reset()
@@ -102,6 +129,25 @@ class ConfettiShape(private var type: Type) {
                 setStar(pX, pY, radius, radius / 2, 5)
                 canvas.drawPath(path, paint)
             }
+            else -> throw UnsupportedOperationException("Unsupported type for draw: [$type]")
+        }
+    }
+
+    fun createPath() {
+        when (type) {
+            Type.CIRCLE -> {
+                setCircle(pX, pY, radius, Path.Direction.CCW)
+            }
+            Type.RECT -> {
+                setPolygon(pX, pY, radius, 4)
+            }
+            Type.PENTAGON -> {
+                setPolygon(pX, pY, radius, 5)
+            }
+            Type.STAR -> {
+                setStar(pX, pY, radius, radius / 2, 5)
+            }
+            else -> throw UnsupportedOperationException("Unsupported type for draw: [$type]")
         }
     }
 

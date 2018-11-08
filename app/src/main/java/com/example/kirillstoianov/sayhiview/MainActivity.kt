@@ -1,7 +1,7 @@
 package com.example.kirillstoianov.sayhiview
 
-import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
@@ -11,6 +11,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         val sayHiView = SayHiView(this@MainActivity)
+//        val layoutParams =ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+//        sayHiView.layoutParams = layoutParams
+//        sayHiView.layoutParams.width = 300
+//        sayHiView.layoutParams.height = 700
         container.addView(sayHiView)
 
         sayHiView.post {

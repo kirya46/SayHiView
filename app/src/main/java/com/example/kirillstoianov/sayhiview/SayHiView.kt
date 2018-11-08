@@ -95,7 +95,27 @@ class SayHiView(context: Context) : View(context) {
 
             //draw hand
             drawHand(this)
+
+            //draw title text
+            drawTitle(this)
         }
+    }
+
+    private fun drawTitle(canvas: Canvas) {
+        //TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+
+        //https://stackoverflow.com/questions/3630086/how-to-get-string-width-on-android
+
+//        val bounds = Rect()
+//        val textPaint = textView.getPaint()
+//        textPaint.getTextBounds(text, 0, text.length(), bounds)
+//        val height = bounds.height()
+//        val width = bounds.width()
+
+        canvas.drawText("You said “Hi!”", width / 2f, height / 5f, Paint().apply {
+            color = Color.BLACK
+            textSize = 150f
+        })
     }
 
     fun startAnimate() {

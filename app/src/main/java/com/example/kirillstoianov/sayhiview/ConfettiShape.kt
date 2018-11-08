@@ -133,24 +133,6 @@ class ConfettiShape(private var type: Type) {
         }
     }
 
-    fun createPath() {
-        when (type) {
-            Type.CIRCLE -> {
-                setCircle(pX, pY, radius, Path.Direction.CCW)
-            }
-            Type.RECT -> {
-                setPolygon(pX, pY, radius, 4)
-            }
-            Type.PENTAGON -> {
-                setPolygon(pX, pY, radius, 5)
-            }
-            Type.STAR -> {
-                setStar(pX, pY, radius, radius / 2, 5)
-            }
-            else -> throw UnsupportedOperationException("Unsupported type for draw: [$type]")
-        }
-    }
-
     enum class Size { SMALL, MEDIUM, LARGE }
     enum class Type { CIRCLE, RECT, PENTAGON, STAR }
 }

@@ -35,8 +35,7 @@ class SayHiView(context: Context) : View(context) {
     private var handDegree: Float = 0f
 
     private val confettiDistanceAnimator by lazy {
-        //        ValueAnimator.ofFloat(Math.max(width, height).toFloat()/4,Math.max(width, height).toFloat()/2).apply {
-        ValueAnimator.ofFloat(0f/*Math.min(width, height).toFloat() / 4*/, Math.min(width, height).toFloat() / 3f)
+        ValueAnimator.ofFloat(0f/*Math.min(width, height).toFloat() / 4*/, Math.min(width, height).toFloat() / 2.5f)
             .apply {
                 repeatCount = ValueAnimator.INFINITE
                 repeatMode = ValueAnimator.REVERSE
@@ -116,7 +115,7 @@ class SayHiView(context: Context) : View(context) {
     }
 
     private fun generateConfetti() {
-        IntRange(0, 25).forEach {
+        IntRange(0, 30).forEach {
             confettiItems.add(getRandomShape())
         }
     }

@@ -32,7 +32,9 @@ class SayHiView(context: Context) : View(context) {
         //        ValueAnimator.ofFloat(Math.max(width, height).toFloat()/4,Math.max(width, height).toFloat()/2).apply {
         ValueAnimator.ofFloat(0f/*Math.min(width, height).toFloat() / 4*/, Math.min(width, height).toFloat() / 2f)
             .apply {
-                duration = 5000
+                repeatCount = ValueAnimator.INFINITE
+                repeatMode = ValueAnimator.REVERSE
+                duration = 2000
                 addUpdateListener {
                     animateRadius = it.animatedValue as Float
                     invalidate()

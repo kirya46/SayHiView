@@ -13,6 +13,8 @@ class MainActivity : AppCompatActivity() {
         val sayHiView = SayHiView(this@MainActivity)
         container.addView(sayHiView)
 
-        sayHiView.startAnimate()
+        sayHiView.post {
+            sayHiView.startAnimate()
+        }
     }
 }

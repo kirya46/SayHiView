@@ -29,13 +29,15 @@ class SayHiView(context: Context) : View(context) {
     private var handDegree: Float = 0f
 
     private val confettiDistanceAnimator by lazy {
-        ValueAnimator.ofFloat(0f, 300f).apply {
-            duration = 1000
-            addUpdateListener {
-                animateRadius = it.animatedValue as Float
-                invalidate()
+        //        ValueAnimator.ofFloat(Math.max(width, height).toFloat()/4,Math.max(width, height).toFloat()/2).apply {
+        ValueAnimator.ofFloat(0f/*Math.min(width, height).toFloat() / 4*/, Math.min(width, height).toFloat() / 2f)
+            .apply {
+                duration = 5000
+                addUpdateListener {
+                    animateRadius = it.animatedValue as Float
+                    invalidate()
+                }
             }
-        }
     }
 
     private val handDegreeAnimator by lazy {
@@ -55,17 +57,7 @@ class SayHiView(context: Context) : View(context) {
      */
     init {
         post {
-            val circle = ConfettiShape()
-            circle.setCircle(width / 4f, height / 4f, width / 10f, Path.Direction.CCW)
-            confettiItems.add(circle)
-
-            val rect = ConfettiShape()
-            rect.setPolygon(width / 3f, height / 3f, width / 10f, 4)
-            confettiItems.add(rect)
-
-            val start = ConfettiShape()
-            start.setStar(width / 2f, height / 2f, width / 10f, width / 20f, 5)
-            confettiItems.add(start)
+            generateConfetti()
         }
     }
 
@@ -73,11 +65,20 @@ class SayHiView(context: Context) : View(context) {
         super.onDraw(canvas)
 
         canvas?.apply {
+
+//            canvas.drawOval(
+//                RectF(
+//                    width / 2f + animateRadius,
+//                    height / 2f + animateRadius,
+//                    width / 2f - animateRadius,
+//                    height / 2f - animateRadius
+//                ), Paint().apply { color = Color.RED })
+
+            confettiItems.forEach { shape ->
+                drawConfetti(this, shape)
+            }
             drawHand(this)
 
-            /*confettiItems.forEach { shape ->
-                drawConfetti(this, shape)
-            }*/
         }
     }
 
@@ -90,7 +91,6 @@ class SayHiView(context: Context) : View(context) {
         val handLeft = width / 2f - handBitmap.width / 2
         val handTop = height / 2f - handBitmap.height / 2
 
-
         val matrix = Matrix()
         matrix.postRotate(handDegree, handBitmap.width / 2f, handBitmap.height.toFloat())
         matrix.postTranslate(handLeft, handTop)
@@ -98,14 +98,42 @@ class SayHiView(context: Context) : View(context) {
     }
 
     private fun drawConfetti(canvas: Canvas, shape: ConfettiShape) {
-        canvas.drawPath(shape.path, shape.paint)
+        shape.pX = width/2+((animateRadius) * Math.cos(Math.toRadians(shape.degree.toDouble())).toFloat())
+        shape.pY = height/2+((animateRadius) * Math.sin(Math.toRadians(shape.degree.toDouble())).toFloat())
+        shape.r = getShapeRadius(shape)
+
+        shape.draw(canvas)
     }
 
     private fun getShapeRadius(confettiShape: ConfettiShape): Float {
-        return when (confettiShape.size) {
+        val diameter = when (confettiShape.size) {
             ConfettiShape.Size.SMALL -> Math.min(width, height) / 36f
             ConfettiShape.Size.MEDIUM -> Math.min(width, height) / 27f
             ConfettiShape.Size.LARGE -> Math.min(width, height) / 12f
         }
+        return diameter / 2
+    }
+
+    private fun generateConfetti() {
+        val circle = ConfettiShape(ConfettiShape.Type.CIRCLE)
+        circle.size = ConfettiShape.Size.SMALL
+        circle.degree = 1f
+        confettiItems.add(circle)
+
+        val rect = ConfettiShape(ConfettiShape.Type.RECT)
+        rect.size = ConfettiShape.Size.MEDIUM
+        rect.degree = 45f
+        rect.setColor(Color.RED)
+        confettiItems.add(rect)
+
+        val star = ConfettiShape(ConfettiShape.Type.STAR)
+        star.size = ConfettiShape.Size.LARGE
+        star.degree = 90f
+        star.setColor(Color.YELLOW)
+        confettiItems.add(star)
+    }
+
+    private fun getRandomShape():ConfettiShape{
+        TODO("Implement this")
     }
 }

@@ -24,22 +24,29 @@ class SayHiView(context: Context) : View(context) {
 
     private val handBitmap: Bitmap by lazy {
         val source = BitmapFactory.decodeResource(resources, R.drawable.img_sayhi_hand)
-        val ratio = 1.3
-        val bitmapWidth = Math.min(width, height) / 3
-        val bitmapHeight = (Math.min(width, height) / 3 * ratio).roundToInt()
+        val bitmapWidth = getBitmapWidth()
+        val bitmapHeight = getBitmapHeight()
         return@lazy Bitmap.createScaledBitmap(source, bitmapWidth, bitmapHeight, true)
+    }
+
+    private fun getBitmapWidth(): Int = Math.min(width, height) / 3
+    private fun getBitmapHeight(): Int {
+        val ratio = 1.3
+        return (Math.min(width, height) / 3 * ratio).roundToInt()
     }
 
     //Animated values
     private var animateRadius: Float = 0f
     private var handDegree: Float = 0f
+    private var handAnimatedWidth: Float = 0f
+
+    val handMatrix = Matrix()
+
 
     private val confettiDistanceAnimator by lazy {
         ValueAnimator.ofFloat(0f/*Math.min(width, height).toFloat() / 4*/, Math.min(width, height).toFloat() / 2.5f)
             .apply {
-                repeatCount = ValueAnimator.INFINITE
-                repeatMode = ValueAnimator.REVERSE
-                duration = 1500
+                duration = 400
                 addUpdateListener {
                     animateRadius = it.animatedValue as Float
                     invalidate()
@@ -49,13 +56,21 @@ class SayHiView(context: Context) : View(context) {
 
     private val handDegreeAnimator by lazy {
         ValueAnimator.ofFloat(-15f, 15f).apply {
-            duration = 1500
+            duration = 500
             repeatCount = ValueAnimator.INFINITE
             repeatMode = ValueAnimator.REVERSE
             addUpdateListener {
                 handDegree = it.animatedValue as Float
                 invalidate()
             }
+        }
+    }
+
+    private val handScaleAnimator by lazy {
+        ValueAnimator.ofFloat(0f, getBitmapWidth().toFloat()).apply {
+            startDelay = 350
+            duration = 250
+            addUpdateListener { handAnimatedWidth = it.animatedValue as Float }
         }
     }
 
@@ -72,27 +87,44 @@ class SayHiView(context: Context) : View(context) {
         super.onDraw(canvas)
 
         canvas?.apply {
+
+            //draw confetti items
             confettiItems.forEach { shape ->
                 drawConfetti(this, shape)
             }
-            drawHand(this)
 
+            //draw hand
+            drawHand(this)
         }
     }
 
     fun startAnimate() {
-        handDegreeAnimator.start()
+        handScaleAnimator.start()
         confettiDistanceAnimator.start()
+        handDegreeAnimator.start()
     }
 
     private fun drawHand(canvas: Canvas) {
-        val handLeft = width / 2f - handBitmap.width / 2
-        val handTop = height / 2f - handBitmap.height / 2
 
-        val matrix = Matrix()
-        matrix.postRotate(handDegree, handBitmap.width / 2f, handBitmap.height.toFloat())
-        matrix.postTranslate(handLeft, handTop)
-        canvas.drawBitmap(handBitmap, matrix, null)
+        handMatrix.reset()
+
+        val scaleWidthFactor = handAnimatedWidth / handBitmap.width
+        val scaleHeightFactor = handAnimatedWidth * 1.3f / handBitmap.height
+
+        val newWidth = handBitmap.width * scaleWidthFactor
+        val newHeight = handBitmap.height * scaleHeightFactor
+
+        val handLeft = (width / 2f) - newWidth / 2
+        val handTop = (height / 2f) - newHeight / 2
+
+        handMatrix.preRotate(handDegree, newWidth / 2f, newHeight)
+        handMatrix.postScale(
+            scaleWidthFactor,
+            scaleHeightFactor/*,handLeft+handBitmap.width, handTop+handBitmap.height*/
+        )
+        handMatrix.postTranslate(handLeft, handTop)
+
+        canvas.drawBitmap(handBitmap, handMatrix, null)
     }
 
     private fun drawConfetti(canvas: Canvas, shape: ConfettiShape) {
@@ -130,7 +162,7 @@ class SayHiView(context: Context) : View(context) {
     }
 
     private fun getRandomDegree(): Int {
-       return (0 until 180).random()  *2
+        return (0 until 180).random() * 2
     }
 
     private fun getRandomRadiusOffset(): Int = (0 until (width / 5)).random()

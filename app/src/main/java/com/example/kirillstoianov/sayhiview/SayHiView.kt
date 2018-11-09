@@ -163,7 +163,7 @@ class SayHiView(context: Context) : View(context) {
     }
 
     /**
-     * Animator of [handBitmap] scaling effetc.
+     * Animator of [handBitmap] scaling effect.
      */
     private val handScaleAnimator by lazy {
         ValueAnimator.ofFloat(0f, getHandBitmapWidth().toFloat()).apply {
@@ -232,10 +232,15 @@ class SayHiView(context: Context) : View(context) {
      *
      */
     private fun drawConfetti(canvas: Canvas, shape: ConfettiShape) {
+        //get shape position on confetti imaginary circle by x-asix
         shape.pX = width / 2 +
-                ((animatedConfettiRadius + shape.radiusOffset) * Math.cos(Math.toRadians(shape.angle.toDouble())).toFloat())
+                ((animatedConfettiRadius + shape.drawConfig.radiusDeviation) * Math.cos(Math.toRadians(shape.drawConfig.angleDeviation.toDouble())).toFloat())
+
+        //get shape position on confetti imaginary circle by y-asix
         shape.pY = height / 2 +
-                ((animatedConfettiRadius + shape.radiusOffset) * Math.sin(Math.toRadians(shape.angle.toDouble())).toFloat())
+                ((animatedConfettiRadius + shape.drawConfig.radiusDeviation) * Math.sin(Math.toRadians(shape.drawConfig.angleDeviation.toDouble())).toFloat())
+
+        //get shape radius
         shape.radius = getShapeRadius(shape)
 
         shape.draw(canvas)
@@ -246,14 +251,13 @@ class SayHiView(context: Context) : View(context) {
      */
     private fun drawTitle(canvas: Canvas) {
 
+        //get text bounds for title text and his Paint.
         titleTextPaint.getTextBounds(titleText, 0, titleText.length, titleTextBound)
 
         val textWidth = titleTextBound.width()
-        val textHeight = titleTextBound.height()
-
 
         val textLeft = width / 2f - (textWidth / 2)
-        val textTop = height / 5f //- (textHeight / 2)
+        val textTop = height / 5f
         canvas.drawText(titleText, textLeft, textTop, titleTextPaint)
     }
 
@@ -264,18 +268,22 @@ class SayHiView(context: Context) : View(context) {
 
         handMatrix.reset()
 
+        //get scale factor
         val scaleWidthFactor = animatedHandWidth / handBitmap.width
         val scaleHeightFactor = animatedHandWidth * handBitmapHeightRatio / handBitmap.height
 
+        //calculate new width/height
         val newWidth = handBitmap.width * scaleWidthFactor
         val newHeight = handBitmap.height * scaleHeightFactor
 
+        //calculate start position by x-axis and y-axis
         val handLeft = (width / 2f) - newWidth / 2
         val handTop = (height / 2f) - newHeight / 2
 
+        //apply transformation for bitmap
         handMatrix.preRotate(
             animatedHandDegree,
-            newWidth / 2f/*point of rotation by x-asix*/,
+            newWidth / 2f/*point of rotation by x-axis*/,
             newHeight/*point of rotate by y-axis*/
         )
         handMatrix.postScale(scaleWidthFactor, scaleHeightFactor)
@@ -290,10 +298,10 @@ class SayHiView(context: Context) : View(context) {
      * [SayHiView] support 3 different size's for [ConfettiShape].
      */
     private fun getShapeRadius(confettiShape: ConfettiShape): Float {
-        val diameter = when (confettiShape.size) {
-            ConfettiShape.Size.SMALL -> Math.min(width, height) / 36f
-            ConfettiShape.Size.MEDIUM -> Math.min(width, height) / 27f
-            ConfettiShape.Size.LARGE -> Math.min(width, height) / 17f
+        val diameter = when (confettiShape.drawConfig.sizeType) {
+            ConfettiShape.DrawConfig.SizeType.SMALL -> Math.min(width, height) / 36f
+            ConfettiShape.DrawConfig.SizeType.MEDIUM -> Math.min(width, height) / 27f
+            ConfettiShape.DrawConfig.SizeType.LARGE -> Math.min(width, height) / 17f
         }
         return diameter / 2
     }
@@ -311,12 +319,19 @@ class SayHiView(context: Context) : View(context) {
      * Get random [ConfettiShape] item with random configuration.
      */
     private fun getRandomShape(): ConfettiShape {
-        val confettiShape = ConfettiShape(getRandomShapeType())
-        confettiShape.angle = getRandomDegree().toFloat()
-        confettiShape.radiusOffset = getRandomRadiusOffset()
-        confettiShape.size = getRandomShapeSize()
-        confettiShape.setColor(getRandomColor())
-        return confettiShape
+
+        val drawConfig =
+            ConfettiShape.DrawConfig(
+                getRandomShapeType(),
+                getRandomShapeSize(),
+                getRandomDegree().toFloat(),
+                getRandomRadiusOffset()
+            )
+
+        return ConfettiShape.Builder()
+            .setDrawConfig(drawConfig)
+            .setColor(getRandomColor())
+            .build()
     }
 
     /**
@@ -342,13 +357,13 @@ class SayHiView(context: Context) : View(context) {
     /**
      * Get random shape size.
      */
-    private fun getRandomShapeSize(): ConfettiShape.Size {
+    private fun getRandomShapeSize(): ConfettiShape.DrawConfig.SizeType {
         val random = (0 until 4).random()
         return when (random) {
-            1 -> ConfettiShape.Size.SMALL
-            2 -> ConfettiShape.Size.MEDIUM
-            3 -> ConfettiShape.Size.LARGE
-            else -> ConfettiShape.Size.MEDIUM
+            1 -> ConfettiShape.DrawConfig.SizeType.SMALL
+            2 -> ConfettiShape.DrawConfig.SizeType.MEDIUM
+            3 -> ConfettiShape.DrawConfig.SizeType.LARGE
+            else -> ConfettiShape.DrawConfig.SizeType.MEDIUM
         }
     }
 
@@ -363,14 +378,14 @@ class SayHiView(context: Context) : View(context) {
     /**
      * Get random shape type.
      */
-    private fun getRandomShapeType(): ConfettiShape.Type {
+    private fun getRandomShapeType(): ConfettiShape.DrawConfig.ShapeType {
         val random = (0 until 5).random()
         return when (random) {
-            1 -> ConfettiShape.Type.CIRCLE
-            2 -> ConfettiShape.Type.RECT
-            3 -> ConfettiShape.Type.PENTAGON
-            4 -> ConfettiShape.Type.STAR
-            else -> ConfettiShape.Type.RECT
+            1 -> ConfettiShape.DrawConfig.ShapeType.CIRCLE
+            2 -> ConfettiShape.DrawConfig.ShapeType.RECT
+            3 -> ConfettiShape.DrawConfig.ShapeType.PENTAGON
+            4 -> ConfettiShape.DrawConfig.ShapeType.STAR
+            else -> ConfettiShape.DrawConfig.ShapeType.RECT
         }
     }
 
@@ -391,9 +406,59 @@ class SayHiView(context: Context) : View(context) {
     }
 
     /**
-     *
+     * Confetti shape representation.
      */
-    class ConfettiShape(private var type: Type) {
+    class ConfettiShape {
+
+        class Builder {
+            private val confettiShape = ConfettiShape()
+
+            fun setDrawConfig(drawConfig: DrawConfig): Builder {
+                confettiShape.drawConfig = drawConfig
+                return this
+            }
+
+            fun setColor(color: Int): Builder {
+                confettiShape.setColor(color)
+                return this
+            }
+
+            fun build(): ConfettiShape = confettiShape
+        }
+
+        /**
+         * Base and additional drawing configuration.
+         *
+         * Contains base info about shape as [shapeType] and [sizeType]
+         * and additional params as [angleDeviation] and [radiusDeviation]
+         * which need for randomize [ConfettiShape] drawing position.
+         */
+        class DrawConfig(
+
+            /**
+             * Shape type
+             */
+            var shapeType: ShapeType = ShapeType.CIRCLE,
+
+            /**
+             * Shape size type.
+             */
+            var sizeType: SizeType = SizeType.MEDIUM,
+
+            /**
+             * Angle on confetti imaginary circle.
+             *
+             * NOTE: it deviation from '0 degree'.
+             */
+            var angleDeviation: Float = 0f,
+            /**
+             * Deviation of confetti imaginary circle radius.
+             */
+            var radiusDeviation: Int = 0
+        ) {
+            enum class ShapeType { CIRCLE, RECT, PENTAGON, STAR }
+            enum class SizeType { SMALL, MEDIUM, LARGE }
+        }
 
         /**
          * Paint of shape.
@@ -424,26 +489,16 @@ class SayHiView(context: Context) : View(context) {
         var radius: Float = 0f
 
         /**
-         * Angle on confetti increase circle
+         * Additional drawing params.
          */
-        var angle = 0f
+        var drawConfig = DrawConfig()
 
-        /**
-         * Deviation of confetti increase circle.
-         */
-        var radiusOffset: Int = 0
-
-        /**
-         * Shape size.
-         */
-        var size = Size.MEDIUM
-
-        fun setCircle(x: Float, y: Float, radius: Float, dir: Path.Direction) {
+        private fun setCircle(x: Float, y: Float, radius: Float, dir: Path.Direction) {
             path.reset()
             path.addCircle(x, y, radius, dir)
         }
 
-        fun setPolygon(x: Float, y: Float, radius: Float, numOfPt: Int) {
+        private fun setPolygon(x: Float, y: Float, radius: Float, numOfPt: Int) {
 
             val section = 2.0 * Math.PI / numOfPt
 
@@ -463,7 +518,7 @@ class SayHiView(context: Context) : View(context) {
             path.close()
         }
 
-        fun setStar(x: Float, y: Float, radius: Float, innerRadius: Float, numOfPt: Int) {
+        private fun setStar(x: Float, y: Float, radius: Float, innerRadius: Float, numOfPt: Int) {
 
             val section = 2.0 * Math.PI / numOfPt
 
@@ -491,33 +546,36 @@ class SayHiView(context: Context) : View(context) {
             path.close()
         }
 
+        /**
+         * Set color for current [ConfettiShape].
+         */
         fun setColor(color: Int) {
             paint.color = color
         }
 
+        /**
+         * Draw current shape with current params on canvas.
+         */
         fun draw(canvas: Canvas) {
-            when (type) {
-                Type.CIRCLE -> {
+            when (drawConfig.shapeType) {
+                DrawConfig.ShapeType.CIRCLE -> {
                     setCircle(pX, pY, radius, Path.Direction.CCW)
                     canvas.drawPath(path, paint)
                 }
-                Type.RECT -> {
+                DrawConfig.ShapeType.RECT -> {
                     setPolygon(pX, pY, radius, 4)
                     canvas.drawPath(path, paint)
                 }
-                Type.PENTAGON -> {
+                DrawConfig.ShapeType.PENTAGON -> {
                     setPolygon(pX, pY, radius, 5)
                     canvas.drawPath(path, paint)
                 }
-                Type.STAR -> {
+                DrawConfig.ShapeType.STAR -> {
                     setStar(pX, pY, radius, radius / 2, 5)
                     canvas.drawPath(path, paint)
                 }
-                else -> throw UnsupportedOperationException("Unsupported type for draw: [$type]")
+                else -> throw UnsupportedOperationException("Unsupported type for draw: [${drawConfig.sizeType}]")
             }
         }
-
-        enum class Size { SMALL, MEDIUM, LARGE }
-        enum class Type { CIRCLE, RECT, PENTAGON, STAR }
     }
 }

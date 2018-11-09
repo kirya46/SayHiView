@@ -98,12 +98,6 @@ class SayHiView(context: Context) : View(context) {
     }
 
     /**
-     * Title text position by y-axis.
-     * This value animated by [titleTextTransitionAnimator].
-     */
-    private var animatedTitleYPosition = 0f
-
-    /**
      * Title text alpha.
      * This value animated by [titleTextAlphaAnimator].
      */
@@ -114,10 +108,7 @@ class SayHiView(context: Context) : View(context) {
      */
     private val startTitleTextAlpha: Int = 0
 
-    /**
-     * Finish title text alpha after animation (non transparent).
-     */
-    private val finishTitleTextAlpha: Int = 255
+
 
     //BACKGROUND
     private val startBackgroundAlpha = 0
@@ -139,6 +130,17 @@ class SayHiView(context: Context) : View(context) {
     private var animatedBackgroundAlpha: Int = 0 //transparent on start
 
     /**
+     * Finish title text alpha after animation (non transparent).
+     */
+    private val finishTitleTextAlpha: Int = 255
+
+    /**
+     * Title text position by y-axis.
+     * This value animated by [titleTextTransitionAnimator].
+     */
+    private var animatedTitleYPosition = 0f
+
+    /**
      * Radius of imaginary circle
      * which increase with [confettiDistanceAnimator].
      *
@@ -152,7 +154,7 @@ class SayHiView(context: Context) : View(context) {
      *
      * Need for animate 'say hi' gesture.
      */
-    private var animatedHandDegree: Float = 0f
+    private var animatedHandDegree: Float = -15f
 
     /**
      * Scale anim value of [handBitmap].
@@ -232,11 +234,10 @@ class SayHiView(context: Context) : View(context) {
      * Animator of [handBitmap] rotation.
      */
     private val handDegreeAnimator by lazy {
-        ValueAnimator.ofFloat(15f, -15f).apply {
+        ValueAnimator.ofFloat(-15f, 15f).apply {
             duration = 450
-            repeatCount = 3
+            repeatCount = 2
             repeatMode = ValueAnimator.REVERSE
-            interpolator = LinearInterpolator()
             addUpdateListener {
                 animatedHandDegree = it.animatedValue as Float
                 invalidate()
@@ -263,7 +264,10 @@ class SayHiView(context: Context) : View(context) {
         ValueAnimator.ofFloat(0f, getHandBitmapWidth().toFloat()).apply {
             startDelay = 100
             duration = 300
-            addUpdateListener { animatedHandWidth = it.animatedValue as Float }
+            addUpdateListener {
+                animatedHandWidth = it.animatedValue as Float
+                invalidate()
+            }
         }
     }
 

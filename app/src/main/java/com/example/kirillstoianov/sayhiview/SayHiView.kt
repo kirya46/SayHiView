@@ -6,6 +6,7 @@ import android.content.Context
 import android.graphics.*
 import android.util.TypedValue
 import android.view.View
+import android.view.animation.LinearInterpolator
 import kotlin.math.roundToInt
 
 
@@ -80,7 +81,11 @@ class SayHiView(context: Context) : View(context) {
             color = Color.WHITE
             typeface = Typeface.create("sans-serif-black", Typeface.NORMAL)
             textSize = height / 12f
+            isAntiAlias = true
 
+            //Set text shadow only when text alpha animation finished
+            //in draw drawTitle()
+            /*
             val shadowRadiusDpSize = 4
             val scaledShadowSizeInPx = TypedValue.applyDimension(
                 TypedValue.COMPLEX_UNIT_DIP,
@@ -88,27 +93,51 @@ class SayHiView(context: Context) : View(context) {
                 context.resources.displayMetrics
             )
             setShadowLayer(scaledShadowSizeInPx, 0f, 4f, Color.parseColor("#80000000"))
+            */
         }
     }
 
-    //BACKGROUND
     /**
-     * Background paint for draw gradient on canvas.
+     * Title text position by y-axis.
+     * This value animated by [titleTextTransitionAnimator].
      */
+    private var animatedTitleYPosition = 0f
+
+    /**
+     * Title text alpha.
+     * This value animated by [titleTextAlphaAnimator].
+     */
+    private var animatedTitleTextAlpha: Int = 0
+
+    /**
+     * Start title text alpha (transparent)
+     */
+    private val startTitleTextAlpha: Int = 0
+
+    /**
+     * Finish title text alpha after animation (non transparent).
+     */
+    private val finishTitleTextAlpha: Int = 255
+
+    //BACKGROUND
+    private val startBackgroundAlpha = 0
+    private val finishBackgroundAlpha: Int = 255 / 2
     private val backgroundPaint by lazy {
         Paint().apply {
-            val linearGradient = LinearGradient(
-                0f, 0f,
-                0f, height.toFloat(),
-                Color.parseColor("#00000000"), Color.parseColor("#80000000"),
-                Shader.TileMode.CLAMP
-            )
-            shader = linearGradient
-            isDither = true
+            color = Color.BLACK
+            alpha = animatedBackgroundAlpha
         }
     }
 
     //ANIMATED VALUES
+    /**
+     * Background paint for draw gradient on canvas.
+     *
+     * Receive values from 0.. 255 where 0 - it is transparent
+     * and 255 non transparent.
+     */
+    private var animatedBackgroundAlpha: Int = 0 //transparent on start
+
     /**
      * Radius of imaginary circle
      * which increase with [confettiDistanceAnimator].
@@ -139,6 +168,52 @@ class SayHiView(context: Context) : View(context) {
     private val handMatrix = Matrix()
 
     /**
+     * Background alpha animator.
+     */
+    private val backgroundAlphaAnimator by lazy {
+        ValueAnimator.ofInt(startBackgroundAlpha, finishBackgroundAlpha).apply {
+            duration = 300
+            interpolator = LinearInterpolator()
+            addUpdateListener {
+                animatedBackgroundAlpha = it.animatedValue as Int
+                invalidate()
+            }
+        }
+    }
+
+    /**
+     * Animator of [animatedTitleTextAlpha] for animate title
+     * text alpha.
+     */
+    private val titleTextAlphaAnimator by lazy {
+        ValueAnimator.ofInt(startTitleTextAlpha, finishTitleTextAlpha).apply {
+            duration = 300
+            addUpdateListener {
+                animatedTitleTextAlpha = it.animatedValue as Int
+                invalidate()
+            }
+        }
+    }
+
+    /**
+     * Animator of [animatedTitleYPosition] for animate
+     * title text transition.
+     */
+    private val titleTextTransitionAnimator by lazy {
+        titleTextPaint.getTextBounds(titleText, 0, titleText.length, titleTextBound)
+        val startPositionByY = height / 5f + titleTextBound.height() * 2
+        val finishPositionByY = height / 5f
+        return@lazy ValueAnimator.ofFloat(startPositionByY, finishPositionByY).apply {
+            addUpdateListener {
+                duration = 300
+                animatedTitleYPosition = it.animatedValue as Float
+                invalidate()
+            }
+        }
+    }
+
+
+    /**
      * Animator of [animatedConfettiRadius] for animate [ConfettiShape]'s
      * transition effect.
      */
@@ -158,9 +233,10 @@ class SayHiView(context: Context) : View(context) {
      */
     private val handDegreeAnimator by lazy {
         ValueAnimator.ofFloat(15f, -15f).apply {
-            duration = 500
+            duration = 450
             repeatCount = 3
             repeatMode = ValueAnimator.REVERSE
+            interpolator = LinearInterpolator()
             addUpdateListener {
                 animatedHandDegree = it.animatedValue as Float
                 invalidate()
@@ -185,8 +261,8 @@ class SayHiView(context: Context) : View(context) {
      */
     private val handScaleAnimator by lazy {
         ValueAnimator.ofFloat(0f, getHandBitmapWidth().toFloat()).apply {
-            startDelay = 350
-            duration = 250
+            startDelay = 100
+            duration = 300
             addUpdateListener { animatedHandWidth = it.animatedValue as Float }
         }
     }
@@ -233,6 +309,9 @@ class SayHiView(context: Context) : View(context) {
      * Start view animation.
      */
     fun startAnimate() {
+        titleTextAlphaAnimator.start()
+        titleTextTransitionAnimator.start()
+        backgroundAlphaAnimator.start()
         handScaleAnimator.start()
         confettiDistanceAnimator.start()
         handDegreeAnimator.start()
@@ -242,6 +321,7 @@ class SayHiView(context: Context) : View(context) {
      * Draw view gradient background.
      */
     private fun drawGradientBackground(canvas: Canvas) {
+        backgroundPaint.alpha = animatedBackgroundAlpha
         canvas.drawPaint(backgroundPaint)
     }
 
@@ -271,11 +351,23 @@ class SayHiView(context: Context) : View(context) {
 
         //get text bounds for title text and his Paint.
         titleTextPaint.getTextBounds(titleText, 0, titleText.length, titleTextBound)
+        titleTextPaint.alpha = animatedTitleTextAlpha
+
+        //set shadow only when text alpha animation is finished
+        if (animatedTitleTextAlpha == finishTitleTextAlpha) {
+            val shadowRadiusDpSize = 4
+            val scaledShadowSizeInPx = TypedValue.applyDimension(
+                TypedValue.COMPLEX_UNIT_DIP,
+                shadowRadiusDpSize.toFloat(),
+                context.resources.displayMetrics
+            )
+            titleTextPaint.setShadowLayer(scaledShadowSizeInPx, 0f, 4f, Color.parseColor("#80000000"))
+        }
 
         val textWidth = titleTextBound.width()
 
         val textLeft = width / 2f - (textWidth / 2)
-        val textTop = height / 5f
+        val textTop = animatedTitleYPosition
         canvas.drawText(titleText, textLeft, textTop, titleTextPaint)
     }
 
@@ -484,6 +576,7 @@ class SayHiView(context: Context) : View(context) {
         val paint: Paint = Paint().apply {
             style = Paint.Style.FILL_AND_STROKE
             color = Color.GREEN
+            isAntiAlias = true
         }
 
         /**

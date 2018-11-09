@@ -1,5 +1,6 @@
 package com.example.kirillstoianov.sayhiview
 
+import android.animation.Animator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.*
@@ -17,8 +18,13 @@ import kotlin.math.roundToInt
  */
 class SayHiView(context: Context) : View(context) {
 
-    //TODO: add listener
-    private val listener: () -> Unit = {}
+    /**
+     * Finish view animation listener.
+     *
+     * Set this finishListener outside from this view
+     * for handle animation finish event.
+     * */
+    private val finishListener: () -> Unit = {}
 
     //CONFETTI
     /**
@@ -151,14 +157,26 @@ class SayHiView(context: Context) : View(context) {
      * Animator of [handBitmap] rotation.
      */
     private val handDegreeAnimator by lazy {
-        ValueAnimator.ofFloat(-15f, 15f).apply {
+        ValueAnimator.ofFloat(15f, -15f).apply {
             duration = 500
-            repeatCount = ValueAnimator.INFINITE
+            repeatCount = 3
             repeatMode = ValueAnimator.REVERSE
             addUpdateListener {
                 animatedHandDegree = it.animatedValue as Float
                 invalidate()
             }
+            addListener(object : Animator.AnimatorListener {
+                override fun onAnimationRepeat(animation: Animator?) {}
+
+                override fun onAnimationEnd(animation: Animator?) {
+                    //Invoke finish finishListener
+                    finishListener.invoke()
+                }
+
+                override fun onAnimationCancel(animation: Animator?) {}
+
+                override fun onAnimationStart(animation: Animator?) {}
+            })
         }
     }
 
